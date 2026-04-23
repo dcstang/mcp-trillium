@@ -1,0 +1,23 @@
+services:
+  mcp:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      # Bind only to your Tailscale IP so the port is never reachable from the public internet.
+      # Docker bypasses UFW by default, so this binding IS the firewall.
+      # Set TAILSCALE_IP in .env (run: tailscale ip -4)
+      - "${TAILSCALE_IP:-127.0.0.1}:${MCP_PORT:-8000}:${MCP_PORT:-8000}"
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - trilium_net
+
+networks:
+  # This must match the network your existing Trilium docker-compose stack creates.
+  # Typically it is <project-directory-name>_default  (e.g. trilium_default).
+  # Create it first if it doesn't exist:
+  #   docker network create trilium_net
+  # Or set the name here to match your existing stack's network.
+  trilium_net:
+    external: true
