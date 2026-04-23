@@ -10,8 +10,10 @@ import markdown
 # Load environment variables from .env file
 load_dotenv()
 
+_LOG_PATH = os.environ.get("LOG_PATH", "./debug.log")
+os.makedirs(os.path.dirname(_LOG_PATH) if os.path.dirname(_LOG_PATH) else ".", exist_ok=True)
 logging.basicConfig(
-    filename="/home/dcstang/mcp-trilium/debug.log",
+    filename=_LOG_PATH,
     level=logging.DEBUG,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
@@ -84,7 +86,7 @@ def html_from_markdown(md_text):
 
 
 try:
-    API_URL = "http://localhost:37840/etapi"
+    API_URL = os.environ.get("TRILIUM_BASE_URL", "http://localhost:37840/etapi")
     API_KEY = os.environ.get("TRILIUM_API_KEY")
 
     if not API_KEY:
@@ -92,6 +94,8 @@ try:
 
     HEADERS = {"Authorization": API_KEY, "Content-Type": "application/json"}
 
+    MCP_HOST = os.environ.get("MCP_HOST", "0.0.0.0")
+    MCP_PORT = int(os.environ.get("MCP_PORT", "8000"))
     mcp = FastMCP("Trilium")
 except Exception as e:
     logging.critical(f"Initialization failed: {e}")
@@ -281,6 +285,6 @@ def set_note_dates(note_id: str, start_date: str, end_date: str = None) -> str:
 if __name__ == "__main__":
     logging.info("Entering Event Loop")
     try:
-        mcp.run()
+        mcp.run(transport="sse", host=MCP_HOST, port=MCP_PORT)
     except Exception as e:
         logging.critical(f"Server Crashed: {e}")
